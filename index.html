@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exermo – Redefine Your Limits</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+      /* --- BASE STYLES --- */
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #000;
+        color: #fff;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        antialiased: true;
+      }
+      main {
+        flex-grow: 1;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      /* --- MODAL STYLES --- */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 1rem;
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+      }
+      .modal-overlay.visible {
+        opacity: 1;
+      }
+      .modal-content {
+        position: relative;
+        background-color: rgba(17, 24, 39, 0.7); /* bg-gray-900/70 */
+        border: 1px solid #4B5563; /* border-gray-700 */
+        border-radius: 0.5rem; /* rounded-lg */
+        max-width: 42rem; /* max-w-2xl for story, max-w-lg for join */
+        width: 100%;
+        padding: 2rem; /* p-8 */
+        color: white;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(10px);
+        transform: scale(0.95);
+        transition: transform 0.3s ease-out;
+      }
+      .modal-overlay.visible .modal-content {
+        transform: scale(1);
+      }
+      @media (min-width: 768px) {
+        .modal-content {
+          padding: 3rem; /* md:p-12 */
+        }
+      }
+
+      /* --- LOGO ANIMATION --- */
+      .logo-outline {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: draw-outline 1.5s cubic-bezier(0.5, 1, 0.5, 1) forwards;
+        filter: drop-shadow(0 0 5px currentColor);
+      }
+      .logo-fill {
+        opacity: 0;
+        animation: fill-in 0.5s ease-out forwards 1.5s;
+      }
+      @keyframes draw-outline { 
+        to { stroke-dashoffset: 0; } 
+      }
+      @keyframes fill-in { 
+        to { opacity: 1; } 
+      }
+
+      /* --- GENERAL ANIMATIONS --- */
+      .animate-fade-in-down {
+        opacity: 0;
+        animation: fade-in-down 0.8s ease-out forwards 0.2s;
+      }
+      .animate-fade-slide-up {
+        opacity: 0;
+        animation: fade-slide-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      }
+      .animate-scale-in {
+        opacity: 0;
+        animation: scale-in 0.8s ease-out forwards;
+      }
+      @keyframes fade-in-down {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fade-slide-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+       @keyframes scale-in {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+      }
+    </style>
+</head>
+<body>
+
+  <!-- Main Application View -->
+  <div id="app-container">
+    <header class="absolute top-0 left-0 w-full py-6 px-4 sm:px-8 md:px-12 z-30 animate-fade-in-down">
+      <nav class="max-w-7xl mx-auto flex justify-center sm:justify-start">
+        <svg class="h-9 w-auto text-white" viewBox="0 0 52 48" xmlns="http://www.w3.org/2000/svg" aria-label="Exermo Logo">
+          <title>Exermo Logo</title>
+          <path class="logo-outline" d="M26 0L0 28.8L6.5 38.4L26 19.2L45.5 38.4L52 28.8L26 0Z" fill="none" stroke="currentColor" stroke-width="1.5" pathLength="1"></path>
+          <path class="logo-fill" d="M26 0L0 28.8L6.5 38.4L26 19.2L45.5 38.4L52 28.8L26 0Z" fill="currentColor"></path>
+        </svg>
+      </nav>
+    </header>
+
+    <main>
+      <div class="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+     <video autoplay loop muted playsinline 
+       class="absolute top-0 left-0 w-full h-full object-cover blur-md z-0">
+  <source src="exermo-bg.mp4" type="video/mp4" />
+</video>
+
+        <div class="absolute top-0 left-0 w-full h-full bg-black/40 z-10"></div>
+        
+        <canvas id="particle-canvas" class="absolute top-0 left-0 w-full h-full z-[15]" style="pointer-events: none;"></canvas>
+
+        <div class="relative z-20 flex flex-col items-center">
+          <h1 class="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-tight mb-8 animate-fade-slide-up" style="animation-delay: 0.4s;">
+            EXERMO &ndash; Redefine Your Limits
+          </h1>
+          
+          <div class="flex flex-col sm:flex-row items-center gap-4 animate-fade-slide-up" style="animation-delay: 0.8s;">
+             <button id="join-button" class="bg-white text-black rounded-md px-10 py-4 font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 hover:scale-105 hover:shadow-lg hover:shadow-white/20 transform transition-all duration-300">
+                Join the Drop 
+                <svg class="h-5 w-auto" style="transform: rotate(180deg);" viewBox="0 0 52 48" xmlns="http://www.w3.org/2000/svg" aria-label="Exermo Logo Arrow">
+                  <path d="M26 0L0 28.8L6.5 38.4L26 19.2L45.5 38.4L52 28.8L26 0Z" fill="currentColor"></path>
+                </svg>
+              </button>
+          </div>
+          
+          <button id="story-button" class="mt-12 text-gray-400 hover:text-white transition-colors duration-300 underline underline-offset-4 animate-fade-slide-up" style="animation-delay: 1s;">
+            Our Story
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="py-6 px-4 sm:px-8 md:px-12 text-center text-gray-500 text-sm">
+      <p>&copy; 2024 Exermo. All Rights Reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Story Modal -->
+  <div id="story-modal" class="modal-overlay hidden">
+    <div class="modal-content max-w-2xl">
+      <button class="close-modal-button absolute top-4 right-4 text-gray-400 hover:text-white transition-colors" aria-label="Close story modal">
+        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <h2 class="text-3xl md:text-4xl font-black uppercase mb-6 tracking-wide">Our Story</h2>
+      <div class="space-y-4 text-gray-300 leading-relaxed">
+        <p>Founded in 2023 by visionary athlete and entrepreneur Anass Fattah, EXERMO was born from a single mission: to create performance wear that pushes boundaries just as hard as you do. We believe gymwear isn’t just clothing — it’s a mindset, a symbol of resilience, focus, and power.</p>
+        <p>At EXERMO, every stitch is designed for movement, strength, and confidence. Inspired by athletes, built for warriors, and crafted for anyone ready to go beyond limits.</p>
+        <p class="text-white font-semibold pt-4">We’re not just a brand — we’re a movement. Welcome to EXERMO.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Modal -->
+  <div id="join-modal" class="modal-overlay hidden">
+    <div class="modal-content max-w-lg">
+      <button class="close-modal-button absolute top-4 right-4 text-gray-400 hover:text-white transition-colors" aria-label="Close modal">
+        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+      <h2 class="text-3xl md:text-4xl font-black uppercase mb-2 tracking-wide text-center">Join the Drop</h2>
+      <p class="text-center text-gray-400 mb-8">Get exclusive access to our next release.</p>
+      
+      <form id="join-form" class="space-y-6">
+        <div>
+          <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Name</label>
+          <input type="text" id="name" name="name" placeholder="Your name" class="w-full bg-gray-800/50 border border-gray-700 rounded-md px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" required>
+        </div>
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="your.email@example.com" class="w-full bg-gray-800/50 border border-gray-700 rounded-md px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300" required>
+        </div>
+        <p id="form-error-message" class="text-sm text-red-400 text-center hidden"></p>
+        <button type="submit" id="submit-button" class="w-full bg-white text-black rounded-md px-6 py-4 font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed">
+          Sign Up
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Thank You Screen -->
+  <div id="thank-you-screen" class="hidden relative min-h-screen flex flex-col items-center justify-center text-center px-4 text-white overflow-hidden">
+    <video autoplay loop muted playsinline 
+       class="absolute top-0 left-0 w-full h-full object-cover blur-md z-0">
+  <source src="videos/exermo-bg.mp4" type="video/mp4" />
+</video>
+
+
+      <div class="absolute top-0 left-0 w-full h-full bg-black/50 z-10"></div>
+      
+      <div class="relative z-20 flex flex-col items-center">
+          <svg class="h-16 w-auto mb-8 animate-scale-in" style="animation-delay: 0.2s;" viewBox="0 0 52 48" xmlns="http://www.w3.org/2000/svg" aria-label="Exermo Logo">
+            <path d="M26 0L0 28.8L6.5 38.4L26 19.2L45.5 38.4L52 28.8L26 0Z" fill="currentColor"></path>
+          </svg>
+          <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-4 animate-fade-slide-up" style="animation-delay: 0.4s;">
+            You're on the list
+          </h1>
+          <p class="max-w-lg mx-auto text-lg md:text-xl text-gray-300 animate-fade-slide-up" style="animation-delay: 0.6s;">
+            Thank you for signing up. Keep an eye on your inbox for exclusive access and announcements for our next drop.
+          </p>
+      </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- MODAL HANDLING ---
+  const storyButton = document.getElementById('story-button');
+  const joinButton = document.getElementById('join-button');
+  const storyModal = document.getElementById('story-modal');
+  const joinModal = document.getElementById('join-modal');
+  const closeButtons = document.querySelectorAll('.close-modal-button');
+
+  const openModal = (modal) => {
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('visible'), 10); // For transition
+  };
+
+  const closeModal = (modal) => {
+    if (!modal) return;
+    modal.classList.remove('visible');
+    setTimeout(() => modal.classList.add('hidden'), 300); // Match transition duration
+  };
+
+  storyButton.addEventListener('click', () => openModal(storyModal));
+  joinButton.addEventListener('click', () => openModal(joinModal));
+
+  closeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      closeModal(storyModal);
+      closeModal(joinModal);
+    });
+  });
+
+  // Close modal when clicking on the overlay
+  [storyModal, joinModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal(modal);
+      }
+    });
+  });
+
+
+  // --- FORM SUBMISSION ---
+  const joinForm = document.getElementById('join-form');
+  const submitButton = document.getElementById('submit-button');
+  const errorMessage = document.getElementById('form-error-message');
+  const appContainer = document.getElementById('app-container');
+  const thankYouScreen = document.getElementById('thank-you-screen');
+
+  joinForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const name = joinForm.elements.name.value;
+    const email = joinForm.elements.email.value;
+
+    if (!name || !email || !/^\S+@\S+\.\S+$/.test(email)) {
+        errorMessage.textContent = 'Please enter a valid name and email address.';
+        errorMessage.classList.remove('hidden');
+        return;
+    }
+    
+    errorMessage.classList.add('hidden');
+    submitButton.disabled = true;
+    submitButton.innerHTML = `
+      <svg class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>`;
+
+    // Simulate API call
+    setTimeout(() => {
+      closeModal(joinModal);
+      appContainer.classList.add('hidden');
+      thankYouScreen.classList.remove('hidden');
+    }, 1500);
+  });
+  
+
+  // --- PARTICLE BACKGROUND ---
+  const canvas = document.getElementById('particle-canvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let particles = [];
+    const mouse = { x: -1000, y: -1000, radius: 100 };
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.radius = Math.random() * 1.2 + 0.3;
+        this.vx = (Math.random() - 0.5) * 0.2;
+        this.vy = (Math.random() - 0.5) * 0.2;
+        this.opacity = Math.random() * 0.5 + 0.1;
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        
+        const distanceToMouse = Math.sqrt((this.x - mouse.x)**2 + (this.y - mouse.y)**2);
+        
+        let finalOpacity = this.opacity;
+        if (distanceToMouse < mouse.radius) {
+            finalOpacity = Math.min(1, this.opacity + (1 - distanceToMouse / mouse.radius) * 0.8);
+        }
+        
+        ctx.fillStyle = `rgba(255, 255, 255, ${finalOpacity})`;
+        ctx.shadowColor = `rgba(255, 255, 255, ${finalOpacity * 0.8})`;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.closePath();
+        ctx.restore();
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0) this.x = canvas.width;
+        if (this.x > canvas.width) this.x = 0;
+        if (this.y < 0) this.y = canvas.height;
+        if (this.y > canvas.height) this.y = 0;
+      }
+    }
+
+    const initParticles = () => {
+      particles = [];
+      const particleCount = Math.floor((canvas.width * canvas.height) / 20000);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    };
+
+    const animate = () => {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    initParticles();
+    animate();
+    
+    const handleMouseMove = (event) => {
+      mouse.x = event.clientX;
+      mouse.y = event.clientY;
+    };
+    const handleMouseLeave = () => {
+      mouse.x = -1000;
+      mouse.y = -1000;
+    }
+    const handleResize = () => {
+        resizeCanvas();
+        initParticles();
+    }
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    document.body.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('resize', handleResize);
+  }
+});
+</script>
+
+</body>
+</html>
